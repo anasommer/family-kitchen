@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Family Kitchen — read-only backup</title>
+<style>body{font:1rem/1.6 system-ui;max-width:44rem;margin:2rem auto;padding:1rem;background:#f6f1e7;color:#17324d}button,input{font:inherit;min-height:44px;margin:.5rem 0}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
+<h1>Read-only backup / Sikkerhetskopi / Резервная копия</h1>
+<p><strong>Before-migration export: legacy localStorage only. After activating protected storage, use Backup in app Settings for current data.</strong></p>
+<p>This page does not start the app, migrate data or write to browser storage. Open it on the exact address and port where you use Family Kitchen. Close other Family Kitchen tabs first.</p>
+<p>Denne siden leser bare lagrede data. Bruk samme adresse og port som appen. / Эта страница только читает сохранения. Используйте тот же адрес и порт, что у приложения.</p>
+<p id="origin"></p>
+<button id="download" type="button">Download backup / Last ned / Скачать</button>
+<p>Then select the downloaded JSON file to check it. Keep a copy outside the browser; it contains private data. Photos are not embedded.</p>
+<label>Verify file / Kontroller fil / Проверить файл <input id="verify" type="file" accept=".json,application/json"></label>
+<pre id="status" role="status" aria-live="polite"></pre>
+<script>
+// Deliberately independent of the application, its migrations and service-worker registration.
+const statusElement = document.getElementById('status');
+document.getElementById('origin').textContent = location.origin;
+let captured = null;
+async function hash(text) {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
+}
+document.getElementById('download').onclick = async () => {
+  try {
+    const raw = localStorage.getItem('family-kitchen:v1');
+    if (raw === null) { statusElement.textContent = 'No legacy data at this address. Do not treat this as a backup. After migration, use Backup in app Settings.'; return; }
+    captured = raw;
+    const payload = JSON.stringify({ exportedAt: new Date().toISOString(), origin: location.origin, legacyRaw: raw, currentRaw: null, recovery: [] });
+    const file = JSON.stringify({ format: 'family-kitchen-backup', version: 1, payload, sha256: await hash(payload) }, null, 2);
+    const url = URL.createObjectURL(new Blob([file], { type: 'application/json;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'family-kitchen-before-migration-' + Date.now() + '.json';
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+    statusElement.textContent = 'Download requested. Select the saved file below to verify. No storage was changed.';
+  } catch { statusElement.textContent = 'Cannot read or export. Keep this browser data; do not clear site data. Use HTTPS or localhost and check storage/download permissions.'; }
+};
+document.getElementById('verify').onchange = async (event) => {
+  try {
+    const file = event.target.files[0]; if (!file) return;
+    const parsed = JSON.parse(await file.text());
+    if (parsed.format !== 'family-kitchen-backup' || parsed.version !== 1 || typeof parsed.payload !== 'string' || await hash(parsed.payload) !== parsed.sha256) throw new Error();
+    const snapshot = JSON.parse(parsed.payload);
+    const raw = localStorage.getItem('family-kitchen:v1');
+    if (raw === null || snapshot.legacyRaw !== raw || (captured !== null && captured !== raw)) throw new Error();
+    statusElement.textContent = 'Verified: the downloaded file exactly matches legacy storage at this address. Keep it somewhere safe. No storage was changed.';
+  } catch { statusElement.textContent = 'Not verified: wrong file, changed data or damaged backup. Do not delete your browser data.'; }
+};
+</script>
+</html>
