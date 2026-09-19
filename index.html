@@ -3,16 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#17324d" />
+    <!-- A family tool, not a public site. Covers this page only: see README "Privacy". -->
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="theme-color" content="#f6f1e7" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Family Kitchen" />
-    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <title>Family Kitchen</title>
-    <script type="module" crossorigin src="./assets/index-BpuSjEZZ.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CAGDVbU3.css">
+    <!-- First frame: paper and the name instead of a white flash while the script starts. React replaces it. -->
+    <style>html{background:#f6f1e7}.first-frame{letter-spacing:-.025em;color:#17324d;place-items:center;min-height:100dvh;font:750 1.3rem Avenir Next,Avenir,Segoe UI,sans-serif;display:grid}</style>
+    <script type="module" crossorigin src="./assets/index-Dy9GiObr.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-isz0yQNu.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="first-frame" aria-hidden="true">Family Kitchen</div></div>
   </body>
 </html>
